@@ -1,0 +1,28 @@
+{
+  "name": "msms",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/msms.js",
+  "scripts": {
+    "lint": "eslint src/*.js",
+    "lint:fix": "eslint --fix src/*.js",
+    "build": "microbundle --no-sourcemap src/msms.js",
+    "build:dev": "microbundle --watch --no-compress src/msms.js",
+    "build:notranspile": "uglifyjs --compress --mangle -- src/msms.js > dist/msms.js && gzip-size dist/msms.js",
+    "scratch": "npm run build:dev & browser-sync . --port 4000 -w --no-open",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "ava": "^2.1.0",
+    "browser-sync": "^2.26.7",
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.1.0",
+    "eslint-plugin-import": "^2.18.0",
+    "gzip-size-cli": "^3.0.0",
+    "microbundle": "^0.11.0",
+    "uglify-es": "^3.3.9"
+  }
+}
