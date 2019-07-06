@@ -20,7 +20,7 @@ const create = (name, schema) => {
     props,
     schema: usedSchema,
     queue: [],
-    funcs: new Set(),
+    funcs: new Map(),
   };
 
   state.send = _send(store);
