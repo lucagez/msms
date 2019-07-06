@@ -115,7 +115,7 @@ var use = function (name, alloweds) {
   var store = stores.get(name);
   errors.store(store, name);
   errors.alloweds(store, alloweds);
-  return [_send(store), _on(store, alloweds), _off(store), proxy(store.state)];
+  return [_send(store), proxy(store.state), _on(store, alloweds), _off(store)];
 };
 
 var destroy = function (name) { return stores.delete(name); };
