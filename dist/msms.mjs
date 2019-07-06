@@ -1,1 +1,124 @@
-var t=function(t,n){if(void 0===t)throw new Error(n+" is not a store")},n=new Map,e=function(t){var n=new Proxy(t.state,{set:function(){}});return function(e,r){var o=t.schema[e];!function(t,n){if(void 0===o)throw new Error(n+" is not a prop")}(0,e);var a=o.validate,u=(0,o.action)(n,r);if(a&&!a(u))return!1;if(t.state[e]===u)return!1;t.state[e]=u;for(var i=0,c=t.funcs;i<c.length;i+=1){var f=c[i],s=f[0];f[1].has(e)&&s(n)}return!0}},r=function(t,n){return function(e){t.funcs.has(e)||t.funcs.set(e,new Set(n||t.props))}},o=function(t){return function(n){t.funcs.delete(n)}},a=function(t){return new Proxy(t,{set:function(){}})},u=function(t,r){var o=function(t){var n={},e={};for(var r in t){var o=t[r];"object"==typeof o?(n[r]=void 0!==o.default?o.default:o.action({}),e[r]=o):(n[r]=o({}),e[r]={action:o})}return{state:n,usedSchema:e,props:Object.keys(n)}}(r),a=o.state,u={state:a,props:o.props,schema:o.usedSchema,queue:[],funcs:new Map};a.send=e(u),n.set(t,u)},i=function(e){var r=n.get(e);return t(r,e),a(r.state)},c=function(u,i){var c=n.get(u);return t(c,u),function(t,n){n&&n.forEach(function(n){if(void 0===t.schema[n])throw new Error(n+" is not a prop")})}(c,i),[e(c),r(c,i),o(c),a(c.state)]},f=function(t){return n.delete(t)};export{u as create,c as use,i as get,f as destroy};
+var prepareSchema = function (schema) {
+  var state = {};
+  var usedSchema = {};
+
+  for (var prop in schema) {
+    var current = schema[prop];
+
+    if (typeof current === 'object') {
+      state[prop] = typeof current.default !== 'undefined' ? current.default : current.action({});
+      usedSchema[prop] = current;
+    } else {
+      state[prop] = current({});
+      usedSchema[prop] = {
+        action: current
+      };
+    }
+  }
+
+  return {
+    state: state,
+    usedSchema: usedSchema,
+    props: Object.keys(state)
+  };
+};
+
+var errors = {
+  prop: function (obj, prop) {
+    if (typeof obj === 'undefined') {
+      throw new Error((prop + " is not a prop"));
+    }
+  },
+  store: function (obj, name) {
+    if (typeof obj === 'undefined') {
+      throw new Error((name + " is not a store"));
+    }
+  },
+  alloweds: function (obj, alloweds) {
+    if (alloweds) {
+      alloweds.forEach(function (allowed) {
+        if (typeof obj.schema[allowed] === 'undefined') {
+          throw new Error((allowed + " is not a prop"));
+        }
+      });
+    }
+  }
+};
+
+// Empty set property.
+// => The resulting object will be a read only
+// copy.
+// => Way fater than freezing.
+var proxy = function (obj) { return new Proxy(obj, {
+  set: function set() {}
+
+}); };
+
+var stores = new Map();
+
+var _send = function (store) {
+  var proxied = proxy(store.state);
+  return function (prop, arg) {
+    var current = store.schema[prop];
+    errors.prop(current, prop);
+    var validate = current.validate;
+    var action = current.action;
+    var state = action(proxied, arg);
+    if (validate && !validate(state)) { return false; }
+    if (store.state[prop] === state) { return false; }
+    store.state[prop] = state; // Using slower forEach because of transpilation problems.
+    // However, you cannot load so much elements in a webpage to
+    // outgrow it's speed.
+    // => as the dispatch is O(n)
+
+    store.funcs.forEach(function (list, func) {
+      if (list.has(prop)) {
+        func(proxied);
+      }
+    });
+    return true;
+  };
+};
+
+var _on = function (store, props) { return function (func) {
+  if (store.funcs.has(func)) { return; }
+  store.funcs.set(func, new Set(props || store.props));
+}; };
+
+var _off = function (store) { return function (func) {
+  store.funcs.delete(func);
+}; };
+
+var create = function (name, schema) {
+  var ref = prepareSchema(schema);
+  var state = ref.state;
+  var props = ref.props;
+  var usedSchema = ref.usedSchema;
+  var store = {
+    state: state,
+    props: props,
+    schema: usedSchema,
+    queue: [],
+    funcs: new Map()
+  };
+  state.send = _send(store);
+  stores.set(name, store);
+};
+
+var get = function (name) {
+  var store = stores.get(name);
+  errors.store(store, name);
+  return proxy(store.state);
+};
+
+var use = function (name, alloweds) {
+  var store = stores.get(name);
+  errors.store(store, name);
+  errors.alloweds(store, alloweds);
+  return [_send(store), _on(store, alloweds), _off(store), proxy(store.state)];
+};
+
+var destroy = function (name) { return stores.delete(name); };
+
+export { create, use, get, destroy };
+//# sourceMappingURL=msms.mjs.map

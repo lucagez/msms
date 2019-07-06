@@ -1,15 +1,8 @@
 import errors from './errors';
-
-// Empty set property.
-// => The resulting object will be a read only
-// copy.
-// => Way fater than freezing.
-const makeProxy = obj => new Proxy(obj, {
-  set() { },
-});
+import proxy from './proxy';
 
 const _send = (store) => {
-  const proxied = makeProxy(store.state);
+  const proxied = proxy(store.state);
 
   return (prop, arg) => {
     const current = store.schema[prop];
@@ -25,11 +18,16 @@ const _send = (store) => {
 
     store.state[prop] = state;
 
-    for (const [func, list] of store.funcs) {
+    // Using slower forEach because of transpilation problems.
+    // However, you cannot load so much elements in a webpage to
+    // outgrow it's speed.
+
+    // => as the dispatch is O(n)
+    store.funcs.forEach((list, func) => {
       if (list.has(prop)) {
         func(proxied);
       }
-    }
+    });
 
     return true;
   };

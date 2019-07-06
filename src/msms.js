@@ -1,16 +1,12 @@
 import prepareSchema from './prepareSchema';
 import errors from './errors';
+import proxy from './proxy';
 import stores from './stores';
 import {
   _send,
   _on,
   _off,
 } from './functions';
-
-
-const makeProxy = obj => new Proxy(obj, {
-  set() { },
-});
 
 const create = (name, schema) => {
   const { state, props, usedSchema } = prepareSchema(schema);
@@ -33,7 +29,7 @@ const get = (name) => {
 
   errors.store(store, name);
 
-  return makeProxy(store.state);
+  return proxy(store.state);
 };
 
 const use = (name, alloweds) => {
@@ -46,7 +42,7 @@ const use = (name, alloweds) => {
     _send(store),
     _on(store, alloweds),
     _off(store),
-    makeProxy(store.state),
+    proxy(store.state),
   ];
 };
 

@@ -1,20 +1,21 @@
 {
   "name": "msms",
   "version": "1.0.0",
-  "description": "",
+  "description": "Immutable, framework agnostic state container",
+  "author": "Luca Gesmundo <lucagesmundo@yahoo.it>",
   "main": "dist/msms.js",
   "scripts": {
     "lint": "eslint src/*.js",
     "lint:fix": "eslint --fix src/*.js",
     "build": "microbundle --no-sourcemap src/msms.js",
     "build:dev": "microbundle --watch --no-compress src/msms.js",
+    "build:webpack": "webpack",
     "build:notranspile": "uglifyjs --compress --mangle -- src/msms.js > dist/msms.js && gzip-size dist/msms.js",
     "scratch": "npm run build:dev & browser-sync . --port 4000 -w --no-open",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "ava": "^2.1.0",
     "browser-sync": "^2.26.7",
