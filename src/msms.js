@@ -40,9 +40,9 @@ const use = (name, alloweds) => {
 
   return [
     _send(store),
+    proxy(store.state),
     _on(store, alloweds),
     _off(store),
-    proxy(store.state),
   ];
 };
 
