@@ -47,70 +47,64 @@ var errors = {
 
 var stores = new Map();
 
-var template = function (params) { return ("\n(function ({" + params + "}) {\n  return {" + params + "};\n})\n"); };
+// => The resulting object will be a read only
+// copy.
+// => Way fater than freezing.
 
-var cp = function (arr) {
-  var params = [];
+var makeProxy = function (obj) { return new Proxy(obj, {
+  set: function set() {}
 
-  for (var i = 0; i < arr.length; i++) {
-    params.push(arr[i]);
-  }
+}); };
 
-  var strParams = params.join(',');
-  return eval(template(strParams));
-};
+var _send = function (store) {
+  var proxied = makeProxy(store.state);
+  return function (prop, arg) {
+    var ref = store.queue;
+    var length = ref.length;
+    var current = store.schema[prop];
+    errors.prop(current, prop);
+    var validate = current.validate;
+    var action = current.action;
+    var state = action(proxied, arg);
+    if (validate && !validate(state)) { return false; }
+    if (store.state[prop] === state) { return false; }
+    store.state[prop] = state; // Dispatching in O(n) time 😍
 
-var _copy = function (props, state) {
-  var copyFunc = cp(props);
-  return {
-    copyFunc: copyFunc,
-    copy: function () { return copyFunc(state); }
+    for (var i = 0; i < length; i++) {
+      var ref$1 = store.queue[i];
+      var list = ref$1.list;
+      var func = ref$1.func;
+
+      if (list.has(prop)) {
+        func(proxied);
+      }
+    }
+
+    return true;
   };
 };
 
-var _send = function (store) { return function (prop, arg) {
-  var ref = store.queue;
-  var length = ref.length;
-  var current = store.schema[prop];
-  errors.prop(current, prop);
-  var validate = current.validate;
-  var action = current.action;
-  var state = action(store.state, arg);
-  if (validate && !validate(state)) { return false; }
-  if (store.state[prop] === state) { return false; }
-  store.state[prop] = state; // Dispatching in O(n) time 😍
-
-  for (var i = 0; i < length; i++) {
-    var ref$1 = store.queue[i];
-    var list = ref$1.list;
-    var copy = ref$1.copy;
-    var func = ref$1.func;
-
-    if (list.has(prop)) {
-      func(copy(store.state));
-    }
-  }
-
-  return true;
-}; };
-
-var _on = function (store, props, copy) { return function (func) {
-  if (store.list.has(func)) { return; }
+var _on = function (store, props) { return function (func) {
+  if (store.funcs.has(func)) { return; }
   store.queue.push({
     func: func,
-    list: new Set(props),
-    copy: copy
+    list: new Set(props || store.props)
   });
 }; };
 
 var _off = function (store) { return function (func) {
-  store.list.delete(func);
+  store.funcs.delete(func);
   store.queue = store.queue.filter(function (ref) {
     var current = ref.func;
 
     return func !== current;
   });
 }; };
+
+var makeProxy$1 = function (obj) { return new Proxy(obj, {
+  set: function set() {}
+
+}); };
 
 var create = function (name, schema) {
   var ref = prepareSchema(schema);
@@ -122,28 +116,23 @@ var create = function (name, schema) {
     props: props,
     schema: usedSchema,
     queue: [],
-    list: new Set()
+    funcs: new Set()
   };
+  state.send = _send(store);
   stores.set(name, store);
 };
 
 var get = function (name) {
   var store = stores.get(name);
   errors.store(store, name);
-  return store.state;
+  return makeProxy$1(store.state);
 };
 
 var use = function (name, alloweds) {
   var store = stores.get(name);
   errors.store(store, name);
   errors.alloweds(store, alloweds);
-  var usedProps = alloweds || store.props;
-
-  var ref = _copy(usedProps, store.state);
-  var copy = ref.copy;
-  var copyFunc = ref.copyFunc;
-
-  return [_send(store), _on(store, usedProps, copyFunc), _off(store), copy];
+  return [_send(store), _on(store, alloweds), _off(store), makeProxy$1(store.state)];
 };
 
 var destroy = function (name) { return stores.delete(name); };

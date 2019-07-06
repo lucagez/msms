@@ -5,8 +5,12 @@ import {
   _send,
   _on,
   _off,
-  _copy,
 } from './functions';
+
+
+const makeProxy = obj => new Proxy(obj, {
+  set() { },
+});
 
 const create = (name, schema) => {
   const { state, props, usedSchema } = prepareSchema(schema);
@@ -16,8 +20,10 @@ const create = (name, schema) => {
     props,
     schema: usedSchema,
     queue: [],
-    list: new Set(),
+    funcs: new Set(),
   };
+
+  state.send = _send(store);
 
   stores.set(name, store);
 };
@@ -27,7 +33,7 @@ const get = (name) => {
 
   errors.store(store, name);
 
-  return store.state;
+  return makeProxy(store.state);
 };
 
 const use = (name, alloweds) => {
@@ -36,15 +42,11 @@ const use = (name, alloweds) => {
   errors.store(store, name);
   errors.alloweds(store, alloweds);
 
-  const usedProps = alloweds || store.props;
-
-  const { copy, copyFunc } = _copy(usedProps, store.state);
-
   return [
     _send(store),
-    _on(store, usedProps, copyFunc),
+    _on(store, alloweds),
     _off(store),
-    copy,
+    makeProxy(store.state),
   ];
 };
 
