@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Vue Timer</title>
+</head>
+
+<body>
+
+  <div id="app"></div>
+
+  <script src="../../dist/msms.umd.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <script>
+    const { create, use, get } = msms;
+
+    create('COUNTER', {
+      kali: {
+        default: 0,
+        action: (store, event) => store.kali + event,
+      },
+      count: {
+        validate: state => state > -1,
+        default: 0,
+        action: (store, event) => {
+          store.send('kali', 3);
+          return store.count + event
+        },
+      }
+    });
+
+    Vue.component('display', {
+      data() {
+        return get('COUNTER')
+      },
+      template: `
+        <div>
+          <div>{{ count }}</div>
+        </div>
+      `,
+    });
+
+    Vue.component('buttons', {
+      template: `
+        <div>
+          <button @click="increment">+</button>
+          <button @click="decrement">-</button>
+        </div>
+      `,
+      mounted() {
+        this.send = use('COUNTER')[0];
+      },
+      methods: {
+        increment() {
+          this.send('count', 1);
+        },
+        decrement() {
+          this.send('count', -1);
+        }
+      }
+    });
+
+    Vue.component('others', {
+      template: `
+        <div>
+          <button @click="increment">+</button>
+          <button @click="decrement">-</button>
+        </div>
+      `,
+      mounted() {
+        this.send = use('COUNTER')[0];
+      },
+      methods: {
+        increment() {
+          this.send('count', 2);
+        },
+        decrement() {
+          this.send('count', -2);
+        }
+      }
+    });
+
+    const app = new Vue({
+      el: '#app',
+      data: get('COUNTER'),
+      template: `
+        <div>
+          {{ kali }}
+          <div v-if="count > 10">
+            <others/>
+          </div>
+          <display/>
+          <buttons/>
+        </div>
+      `,
+    });
+  </script>
+</body>
+
+</html>
