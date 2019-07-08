@@ -9,12 +9,13 @@ const _send = (store) => {
 
     errors.prop(current, prop);
 
-    const { validate, action } = current;
+    const { validate, action, effect } = current;
 
     const state = action(proxied, arg);
 
     if (validate && !validate(state)) return false;
     if (store.state[prop] === state) return false;
+    if (effect) effect(proxied, store.send);
 
     store.state[prop] = state;
 

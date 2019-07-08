@@ -19,7 +19,7 @@ const create = (name, schema) => {
     funcs: new Map(),
   };
 
-  state.send = _send(store);
+  store.send = _send(store);
 
   stores.set(name, store);
 };

@@ -6,21 +6,15 @@ const { create, use, get } = msms;
 
 create('COUNTER', {
   culo: {
-    default: {
-      a: {
-        b: 5,
-      },
-    },
-    action: (state, event) => {
-      return state.culo + event
-    },
+    default: 0,
+    action: (state, event) => state.culo + event,
   },
   count: {
     default: 0,
     validate: (count) => count > -1,
-    action: (state, event) => {
-      state.send('culo', 45);
-      return state.count + event
+    action: (state, event) => state.count + event,
+    effect: (state, send) => {
+      send('culo', 10);
     },
   },
 });
@@ -30,6 +24,8 @@ const C1 = ({ id }) => {
   const [, trigger] = useState();
 
   on(trigger);
+
+  console.log(state);
 
   return (
     <div>

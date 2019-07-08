@@ -101,9 +101,11 @@ var _send = function (store) {
     errors.prop(current, prop);
     var validate = current.validate;
     var action = current.action;
+    var effect = current.effect;
     var state = action(proxied, arg);
     if (validate && !validate(state)) { return false; }
     if (store.state[prop] === state) { return false; }
+    if (effect) { effect(proxied, store.send); }
     store.state[prop] = state; // Using slower forEach because of transpilation problems.
     // However, you cannot load so much elements in a webpage to
     // outgrow it's speed.
@@ -139,7 +141,7 @@ var create = function (name, schema) {
     queue: [],
     funcs: new Map()
   };
-  state.send = _send(store);
+  store.send = _send(store);
   stores.set(name, store);
 };
 
