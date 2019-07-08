@@ -6,7 +6,11 @@ const { create, use, get } = msms;
 
 create('COUNTER', {
   culo: {
-    default: 0,
+    default: {
+      a: {
+        b: 5,
+      },
+    },
     action: (state, event) => {
       return state.culo + event
     },
@@ -26,6 +30,8 @@ const C1 = ({ id }) => {
   const [, trigger] = useState();
 
   on(trigger);
+
+  console.log(state)
 
   return (
     <div>
