@@ -31,8 +31,6 @@ const C1 = ({ id }) => {
 
   on(trigger);
 
-  console.log(state)
-
   return (
     <div>
       {state.count}
@@ -57,7 +55,6 @@ class App extends Component {
   render() {
     return (
       <div className="App">
-        {this.state.count > 5 && <h1>HI! (:</h1>}
         {/* {Array(10).fill(0).map((_, i) => <C1 id={i} />)} */}
         <C1 />
       </div>
