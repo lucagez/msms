@@ -2,20 +2,20 @@ import errors from './errors';
 import proxy from './proxy';
 
 const _send = (store) => {
+  const { schema } = store;
   const proxied = proxy(store.state);
 
   return (prop, arg) => {
-    const current = store.schema[prop];
+    errors.prop(schema, prop);
 
-    errors.prop(current, prop);
+    if (prop === 'EFFECTS') return schema.EFFECTS[arg](proxied, store.send);
 
-    const { validate, action, effect } = current;
+    const { validate, action } = schema[prop];
 
     const state = action(proxied, arg);
 
     if (validate && !validate(state)) return false;
     if (store.state[prop] === state) return false;
-    if (effect) effect(proxied, store.send);
 
     store.state[prop] = state;
 
@@ -26,7 +26,7 @@ const _send = (store) => {
     // => as the dispatch is O(n)
     store.funcs.forEach((list, func) => {
       if (list.has(prop)) {
-        func(proxied);
+        func({ ...proxied });
       }
     });
 

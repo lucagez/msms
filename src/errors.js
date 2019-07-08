@@ -1,6 +1,6 @@
 const errors = {
   prop: (obj, prop) => {
-    if (typeof obj === 'undefined') {
+    if (typeof obj[prop] === 'undefined' && prop !== 'EFFECTS') {
       throw new Error(`${prop} is not a prop`);
     }
   },

@@ -1,4 +1,3 @@
-
 // File made for developing purpose
 
 const { Component, useState, useEffect } = React;
@@ -8,16 +7,31 @@ create('COUNTER', {
   culo: {
     default: 0,
     action: (state, event) => state.culo + event,
+    effect: (state, send) => send('count', 1)
   },
   count: {
     default: 0,
     validate: (count) => count > -1,
     action: (state, event) => state.count + event,
-    effect: (state, send) => {
-      send('culo', 10);
-    },
   },
+
+  EFFECTS: {
+    setCulo: (state, send) => {
+      console.log('setCulo pipeline');
+    },
+  }
 });
+
+const C2 = () => {
+  const [, state, on] = use('COUNTER', [
+    'culo',
+  ]);
+  const [, update] = useState();
+
+  on(update);
+
+  return (<h1>{state.culo}</h1>)
+}
 
 const C1 = ({ id }) => {
   const [send, state, on] = use('COUNTER');
@@ -25,7 +39,10 @@ const C1 = ({ id }) => {
 
   on(trigger);
 
-  console.log(state);
+  if (state.count > 10) {
+    send('EFFECTS', 'setCulo');
+  }
+
 
   return (
     <div>
@@ -52,6 +69,7 @@ class App extends Component {
     return (
       <div className="App">
         {/* {Array(10).fill(0).map((_, i) => <C1 id={i} />)} */}
+        <C2 />
         <C1 />
       </div>
     );

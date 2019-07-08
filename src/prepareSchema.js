@@ -4,6 +4,7 @@ const prepareSchema = (schema) => {
 
   for (const prop in schema) {
     const current = schema[prop];
+    if (prop === 'EFFECTS') continue;
     if (typeof current === 'object') {
       state[prop] = typeof current.default !== 'undefined'
         ? current.default
@@ -15,6 +16,8 @@ const prepareSchema = (schema) => {
       usedSchema[prop] = { action: current };
     }
   }
+
+  usedSchema.EFFECTS = schema.EFFECTS;
 
   return {
     state,
